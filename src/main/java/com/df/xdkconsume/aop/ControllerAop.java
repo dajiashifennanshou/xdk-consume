@@ -38,29 +38,32 @@ public class ControllerAop {
  
 	@Before("recordLog()")
 	public void doBefore(JoinPoint joinPoint) throws Throwable {
+		log.info("=====================================");
 		// 接收到请求，记录请求内容
 		ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 		HttpServletRequest request = attributes.getRequest();
 		// 记录下请求内容
-		log.info("URL : " + request.getRequestURL().toString());
-		log.info("HTTP_METHOD : " + request.getMethod());
+		log.info("网址 : " + request.getRequestURL().toString());
+		log.info("请求方式 : " + request.getMethod());
 		log.info("IP : " + request.getRemoteAddr());
 		Enumeration<String> enu = request.getParameterNames();
+		log.info("请求参数");
 		while (enu.hasMoreElements()) {
 			String name = (String) enu.nextElement();
-			log.info("name:{},value:{}", name, request.getParameter(name));
+			log.info(name+":"+request.getParameter(name));
 		}
 	}
 
 	@AfterReturning(returning = "ret", pointcut = "recordLog()")
 	public void doAfterReturning(Object ret) throws Throwable {
 		// 处理完请求，返回内容
-		log.info("RESPONSE : " + ret);
+		log.info("返回参数 ");
+		log.info(ret.toString());
+		log.info("=====================================");
 	}
  
 	@Around("recordLog()")
 	public Object aroundLogCalls(ProceedingJoinPoint jp) throws Throwable {
-		log.info("正常运行");
 		return jp.proceed();
 	}
  
@@ -71,8 +74,7 @@ public class ControllerAop {
  
 	@After("recordLog()")
 	public void after(JoinPoint jp) {
-		log.info("" + jp.getSignature().getName() + "()方法-结束！");
-		log.info("=====================================");
+//		log.info("" + jp.getSignature().getName() + "()方法-结束！");
 	}
 
 }
