@@ -17,33 +17,32 @@ public class VerifyUtil {
 	 * @param data
 	 * @return
 	 */
-	public static String verifySign(Map<String, String> data){
+	public static ResultData verifySign(Map<String, String> data){
 		ResultData result = new ResultData();
 		if(data == null){
 			result.setCode(210);
 			result.setMsg("no parameter");
-			return GsonUtils.getInstance().o2J(result);
+			return result;
 		}
 		String timestamp = data.get("timestamp");
 		String sign = data.get("sign");
 		if(StringUtils.isEmpty(timestamp)||StringUtils.isEmpty(sign)){
 			result.setCode(211);
 			result.setMsg("no sign or timestamp parameter");
-			return GsonUtils.getInstance().o2J(result);
+			return result;
 		}
-		if(System.currentTimeMillis() - Long.valueOf(timestamp) > 20000){
+		if(System.currentTimeMillis() - Long.valueOf(timestamp) > 1000*60*60){
 			result.setCode(212);
 			result.setMsg("timestamp timeout");
-			return GsonUtils.getInstance().o2J(result);
+			return result;
 		}
 		TreeMap<Object, Object> parameters = new TreeMap<>();
 		parameters.putAll(data);
-		parameters.remove("sign");
 		String paySign = createSign(parameters,Constant.SIGN_KEY);
 		if(!paySign.equals(sign)){
 			result.setCode(213);
 			result.setMsg("sign invalid");
-			return GsonUtils.getInstance().o2J(result);
+			return result;
 		}
 		return null;
 	}

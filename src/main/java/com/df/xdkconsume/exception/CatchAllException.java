@@ -19,7 +19,7 @@ public class CatchAllException {
 	@ResponseBody
 	public ResultData defultExcepitonHandler(HttpServletRequest request,Exception e) {
 		ResultData data = new ResultData();
-		data.setCode(400);
+		data.setCode(290);
 		data.setMsg(e.getMessage());
 		log.info("全局异常捕获==="+data.toString());
 		e.printStackTrace();

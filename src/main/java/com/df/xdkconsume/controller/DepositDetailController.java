@@ -1,8 +1,8 @@
 package com.df.xdkconsume.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.df.xdkconsume.service.DepositDetailService;
@@ -23,7 +23,9 @@ public class DepositDetailController {
 	DepositDetailService service;
 	 
 	@RequestMapping("/index")
-	public String getinfo(@RequestParam("name") String name){
+	public String getinfo(@RequestBody String name){
+		System.out.println(name);
+		System.out.println(name.toString());
 		return "hello";
 	}
 }

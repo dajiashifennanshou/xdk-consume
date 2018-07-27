@@ -5,11 +5,12 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.df.xdkconsume.entity.ComsumeParam;
 import com.df.xdkconsume.entity.ResultData;
 import com.df.xdkconsume.entity.SpendDetail;
 import com.df.xdkconsume.service.SpendDetailService;
@@ -41,13 +42,19 @@ public class SpendDetailController {
 	 * @return
 	 */
 	@RequestMapping(value = "/insert",method = RequestMethod.POST)
-	public ResultData inertComsumeRecord(@RequestParam String clientid,@RequestParam Double spendMoney,@RequestParam String computer,@RequestParam String spendDate,@RequestParam String spendTime,@RequestParam String windowNumber){
+	public ResultData inertComsumeRecord(@RequestBody ComsumeParam param){
+		String clientid = param.getClientid();
+		String computer = param.getComputer();
+		String spendDate = param.getSpendDate();
+		String spendTime = param.getSpendTime();
+		String windowNumber = param.getWindowNumber();
 		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
 			return data;
 		}
+		double spendMoney = param.getSpendMoney();
 		SpendDetail detail = new SpendDetail();
 		SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String[] datetime = sFormat.format(new Date()).split(" ");
@@ -80,7 +87,7 @@ public class SpendDetailController {
 		detail.setSdPdname("");
 		detail.setSdSpenddate(spendDate);
 		detail.setSdSpendtime(spendTime);
-		detail.setSdDatatype("在线");
+		detail.setSdDatatype("餐台");
 		detail.setSdSpendtype("消费");
 		detail.setSdWindowno(windowNumber);
 		detail.setSdComputer(computer);

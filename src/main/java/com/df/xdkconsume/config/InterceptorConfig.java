@@ -8,22 +8,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class InterceptorConfig implements WebMvcConfigurer {
 
 	/**
-     * 自己定义的拦截器类
-     * @return
-     */
-    @Bean
-    MyHandlerInterceptor myInterceptor() {
-        return new MyHandlerInterceptor();
-    }
+	 * 自己定义的拦截器类
+	 * @return
+	 */
+	@Bean
+	MyHandlerInterceptor myInterceptor() {
+		return new MyHandlerInterceptor();
+	}
 
-    /**
-     * 添加拦截器
-     * @param registry
-     */
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(myInterceptor()).addPathPatterns("/**");
-    }
+	/**
+	 * 添加拦截器
+	 * @param registry
+	 */
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(myInterceptor()).addPathPatterns("/**").excludePathPatterns("/error/**");
+	}
 
 
 }
