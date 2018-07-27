@@ -30,6 +30,7 @@ public class SpendDetailController {
 	@Autowired
 	private SpendDetailService spendService;
 
+
 	/**
 	 * 微信消费后插入消费明细
 	 * @param clientid
@@ -55,17 +56,23 @@ public class SpendDetailController {
 			return data;
 		}
 		double spendMoney = param.getSpendMoney();
+		if(spendMoney < 0){
+			ResultData data = new ResultData();
+			data.setCode(Constant.CODE_PERSON_MOENY_FU);
+			data.setMsg(Constant.MSG_PERSON_MOENY_FU);
+			return data;
+		}
 		SpendDetail detail = new SpendDetail();
+		detail.setClientid(clientid);
 		SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String[] datetime = sFormat.format(new Date()).split(" ");
-		detail.setClientid(clientid);
 		detail.setSdCldate(datetime[0]);
 		detail.setSdCltime(datetime[1]);
 		detail.setSdComputer(computer);
 		detail.setSdDatatype("在线");
 		detail.setSdDepartment("");
 		String meal = "早";
-		if(spendDate.length() >= 2){
+		if(spendTime.length() >= 2){
 			String time = spendTime.substring(0,2);
 			int time_spend = Integer.valueOf(time);
 			if(time_spend < 15 && time_spend > 10){
@@ -88,6 +95,9 @@ public class SpendDetailController {
 		detail.setSdSpenddate(spendDate);
 		detail.setSdSpendtime(spendTime);
 		detail.setSdDatatype("餐台");
+		detail.setSdSpenddate(spendDate);
+		detail.setSdSpendtime(spendTime);
+		detail.setSdDatatype("在线");
 		detail.setSdSpendtype("消费");
 		detail.setSdWindowno(windowNumber);
 		detail.setSdComputer(computer);

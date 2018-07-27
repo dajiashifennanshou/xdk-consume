@@ -52,7 +52,7 @@ public class PersonDossierController {
 		String spendTime = param.getSpendTime();
 		String windowNumber = param.getWindowNumber();
 		double spendMoney = param.getSpendMoney();
-		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(cardid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)||spendMoney == 0){
+		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(cardid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)||spendMoney == 0){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
@@ -112,7 +112,7 @@ public class PersonDossierController {
 			detail.setSdDatatype("餐台");
 			detail.setSdDepartment(pDossier.getPdDepartment());
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -169,7 +169,7 @@ public class PersonDossierController {
 			detail.setSdDatatype("餐台");
 			detail.setSdDepartment(pDossier.getPdDepartment());
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -219,7 +219,7 @@ public class PersonDossierController {
 				return data;
 			}
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -310,7 +310,7 @@ public class PersonDossierController {
 		}
 		EntityWrapper<PersonDossier> pWrapper = new EntityWrapper<>();
 		pWrapper.where("pd_cardid = {0}",cardid).and("clientid = {0}",clientid);
-		PersonDossier pDossier =  (PersonDossier) personService.selectOne(pWrapper);
+		PersonDossier pDossier =  (PersonDossier) personService.selectMap(pWrapper);
 		ResultData data = new ResultData();
 		if(pDossier == null||pDossier.getPdAccountid() == null){
 			data.setCode(Constant.CODE_PERSON_NO_USER);
@@ -354,8 +354,10 @@ public class PersonDossierController {
 			detail.setSdComputer(computer);
 			detail.setSdDatatype("手持");
 			detail.setSdDepartment(pDossier.getPdDepartment());
+			detail.setSdDatatype("在线");
+			detail.setSdDepartment(pDossier.getPdDepartment());
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -411,8 +413,10 @@ public class PersonDossierController {
 			detail.setSdComputer(computer);
 			detail.setSdDatatype("手持");
 			detail.setSdDepartment(pDossier.getPdDepartment());
+			detail.setSdDatatype("在线");
+			detail.setSdDepartment(pDossier.getPdDepartment());
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -462,7 +466,7 @@ public class PersonDossierController {
 				return data;
 			}
 			String meal = "早";
-			if(spendDate.length() >= 2){
+			if(spendTime.length() >= 2){
 				String time = spendTime.substring(0,2);
 				int time_spend = Integer.valueOf(time);
 				if(time_spend < 15 && time_spend > 10){
@@ -482,6 +486,7 @@ public class PersonDossierController {
 			detail.setSdCltime(datetime[1]);
 			detail.setSdComputer(computer);
 			detail.setSdDatatype("手持");
+			detail.setSdDatatype("在线");
 			detail.setSdDepartment(pDossier.getPdDepartment());
 			detail.setSdMeal(meal);
 			detail.setSdMoney(extroMoney);
@@ -507,6 +512,7 @@ public class PersonDossierController {
 			detail1.setSdCltime(datetime[1]);
 			detail1.setSdComputer(computer);
 			detail1.setSdDatatype("手持");
+			detail1.setSdDatatype("在线");
 			detail1.setSdDepartment(pDossier.getPdDepartment());
 			detail1.setSdMeal(meal);
 			detail1.setSdMoney(Double.valueOf(should_pay));

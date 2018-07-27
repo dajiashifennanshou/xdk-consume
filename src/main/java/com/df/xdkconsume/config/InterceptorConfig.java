@@ -25,5 +25,4 @@ public class InterceptorConfig implements WebMvcConfigurer {
 		registry.addInterceptor(myInterceptor()).addPathPatterns("/**").excludePathPatterns("/error/**");
 	}
 
-
 }
