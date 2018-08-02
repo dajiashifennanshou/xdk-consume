@@ -1,4 +1,4 @@
-package com.df.xdkconsume.aop;
+package com.df.xdkconsume.log;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Enumeration;

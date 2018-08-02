@@ -51,24 +51,14 @@
 			</dependency> -->
 		<!-- mybatis <dependency> <groupId>org.mybatis.spring.boot</groupId> <artifactId>mybatis-spring-boot-starter</artifactId> 
 			<version>1.3.2</version> </dependency> -->
-		<!-- ehchache 
-		<dependency>
-			<groupId>net.sf.ehcache</groupId>
-			<artifactId>ehcache</artifactId>
-		</dependency>-->
+		<!-- ehchache <dependency> <groupId>net.sf.ehcache</groupId> <artifactId>ehcache</artifactId> 
+			</dependency> -->
 
-		<!-- https://mvnrepository.com/artifact/org.mybatis/mybatis-ehcache 
-		<dependency>
-			<groupId>org.mybatis</groupId>
-			<artifactId>mybatis-ehcache</artifactId>
-			<version>1.0.0</version>
-		</dependency>-->
-		<!-- mybatis
-		<dependency>
-			<groupId>org.mybatis.spring.boot</groupId>
-			<artifactId>mybatis-spring-boot-starter</artifactId>
-			<version>1.3.2</version>
-		</dependency> -->
+		<!-- https://mvnrepository.com/artifact/org.mybatis/mybatis-ehcache <dependency> 
+			<groupId>org.mybatis</groupId> <artifactId>mybatis-ehcache</artifactId> <version>1.0.0</version> 
+			</dependency> -->
+		<!-- mybatis <dependency> <groupId>org.mybatis.spring.boot</groupId> <artifactId>mybatis-spring-boot-starter</artifactId> 
+			<version>1.3.2</version> </dependency> -->
 		<!-- mybatisplus -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
@@ -81,8 +71,12 @@
 			<artifactId>druid</artifactId>
 			<version>1.0.14</version>
 		</dependency>
-		<!-- MP 核心库 自动生成代码使用 <dependency> <groupId>com.baomidou</groupId> <artifactId>mybatis-plus</artifactId> 
-			<version>2.1.9</version> </dependency> -->
+		<!-- MP 核心库 自动生成代码使用 
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus</artifactId>
+			<version>2.1.9</version>
+		</dependency>-->
 		<!-- sqlserviver -->
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>

@@ -69,7 +69,6 @@ public class SpendDetailController {
 		detail.setSdCldate(datetime[0]);
 		detail.setSdCltime(datetime[1]);
 		detail.setSdComputer(computer);
-		detail.setSdDatatype("在线");
 		detail.setSdDepartment("");
 		String meal = "早";
 		if(spendTime.length() >= 2){
@@ -85,7 +84,7 @@ public class SpendDetailController {
 		}
 		detail.setSdMeal(meal);
 		detail.setSdMoney(spendMoney);
-		detail.setSdMoneyaccount("微信消费");
+		detail.setSdMoneyaccount("现金");
 		detail.setSdNewmoney(0.0);
 		detail.setSdOldmoney(0.0);
 		detail.setSdOperator("");
@@ -97,8 +96,7 @@ public class SpendDetailController {
 		detail.setSdDatatype("餐台");
 		detail.setSdSpenddate(spendDate);
 		detail.setSdSpendtime(spendTime);
-		detail.setSdDatatype("在线");
-		detail.setSdSpendtype("消费");
+		detail.setSdSpendtype("微信消费");
 		detail.setSdWindowno(windowNumber);
 		detail.setSdComputer(computer);
 		ResultData data = new ResultData();

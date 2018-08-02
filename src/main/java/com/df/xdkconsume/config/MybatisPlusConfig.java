@@ -12,10 +12,10 @@ import com.baomidou.mybatisplus.plugins.PaginationInterceptor;
 */
 @Configuration
 public class MybatisPlusConfig {
-	 /***
-     * plus 的性能优化
-     * @return
-     */
+//	 /***
+//     * plus 的性能优化
+//     * @return
+//     */
 //    @Bean
 //    public PerformanceInterceptor performanceInterceptor() {
 //        PerformanceInterceptor performanceInterceptor = new PerformanceInterceptor();
