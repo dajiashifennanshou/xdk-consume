@@ -31,7 +31,7 @@ public class MyHandlerInterceptor implements HandlerInterceptor {
 			response.getWriter().write(GsonUtils.getInstance().o2J(result));
 			return false;
 		}
-		HashMap<String, String>data = GsonUtils.getInstance().j2T(requestParam, new TypeToken<HashMap<String, String>>(){}.getType());
+		HashMap<String, String> data = GsonUtils.getInstance().j2T(requestParam, new TypeToken<HashMap<String, String>>(){}.getType());
 		ResultData result = VerifyUtil.verifySign(data);
 		if(result != null){
 			response.getWriter().write(GsonUtils.getInstance().o2J(result));

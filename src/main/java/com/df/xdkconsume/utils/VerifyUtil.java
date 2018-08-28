@@ -36,7 +36,7 @@ public class VerifyUtil {
 			result.setMsg("timestamp timeout");
 			return result;
 		}
-		TreeMap<Object, Object> parameters = new TreeMap<>();
+		TreeMap<String, String> parameters = new TreeMap<>();
 		parameters.putAll(data);
 		String paySign = createSign(parameters,Constant.SIGN_KEY);
 		if(!paySign.equals(sign)){
@@ -53,13 +53,13 @@ public class VerifyUtil {
 	 * @param parameters 请求参数
 	 * @return
 	 */
-	public static String createSign(SortedMap<Object,Object> parameters,String key){
+	public static String createSign(SortedMap<String,String> parameters,String key){
 		StringBuffer sb = new StringBuffer();
 		Set<?> es = parameters.entrySet();
 		Iterator<?> it = es.iterator();
 		while(it.hasNext()) {
-			@SuppressWarnings("rawtypes")
-			Map.Entry entry = (Map.Entry)it.next();
+			@SuppressWarnings("unchecked")
+			Map.Entry<String,String> entry = (Map.Entry<String,String>)it.next();
 			String k = (String)entry.getKey();
 			Object v = entry.getValue();
 			if(null != v && !"".equals(v) 

@@ -23,7 +23,7 @@
 //	String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";//驱动
 //	DbType type = DbType.SQL_SERVER;//数据库类型
 //	String packageName = "com.df.xdkconsume";//包名
-//	String[] tables = {"Department"};//修改替换成你需要的表名，多个表名传数组
+//	String[] tables = {"Ct_Canteen","Food_Menu"};//修改替换成你需要的表名，多个表名传数组
 //	boolean serviceNameStartWithI = false;//user -> UserService, 设置成true: user -> IUserService
 //
 //	@Test

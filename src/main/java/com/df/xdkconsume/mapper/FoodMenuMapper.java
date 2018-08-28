@@ -1,6 +1,6 @@
 package com.df.xdkconsume.mapper;
 
-import com.df.xdkconsume.entity.Department;
+import com.df.xdkconsume.entity.FoodMenu;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -12,9 +12,9 @@ import com.baomidou.mybatisplus.mapper.BaseMapper;
  * </p>
  *
  * @author df
- * @since 2018-08-02
+ * @since 2018-08-28
  */
 @Mapper
-public interface DepartmentMapper extends BaseMapper<Department> {
+public interface FoodMenuMapper extends BaseMapper<FoodMenu> {
 
 }

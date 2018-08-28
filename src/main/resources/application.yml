@@ -14,4 +14,9 @@ spring:
 mybatis-plus:
   mapper-locations: classpath:/mapper/*.xml
   type-aliases-package: com.df.xdkconsume.mapper
-  
+
+#威富通支付参数
+pay-config: 
+   appid: 121564
+   mch_id: 7551000001
+   key: 9d101c97133837e13dde2d32a5054abb

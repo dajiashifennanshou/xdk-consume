@@ -49,7 +49,7 @@ public class SpendDetailController {
 		String spendDate = param.getSpendDate();
 		String spendTime = param.getSpendTime();
 		String windowNumber = param.getWindowNumber();
-		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)){
+		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
@@ -91,8 +91,6 @@ public class SpendDetailController {
 		detail.setSdPdaccountid("");
 		detail.setSdPdid("");
 		detail.setSdPdname("");
-		detail.setSdSpenddate(spendDate);
-		detail.setSdSpendtime(spendTime);
 		detail.setSdDatatype("餐台");
 		detail.setSdSpenddate(spendDate);
 		detail.setSdSpendtime(spendTime);
@@ -109,4 +107,5 @@ public class SpendDetailController {
 		}
 		return data;
 	}
+
 }
