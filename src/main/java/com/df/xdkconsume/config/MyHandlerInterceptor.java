@@ -6,24 +6,39 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.alibaba.druid.util.StringUtils;
 import com.df.xdkconsume.entity.ResultData;
+import com.df.xdkconsume.mapper.DeviceMapper;
 import com.df.xdkconsume.utils.GsonUtils;
 import com.df.xdkconsume.utils.HttpHelper;
 import com.df.xdkconsume.utils.VerifyUtil;
 import com.google.gson.reflect.TypeToken;
 @Component
 public class MyHandlerInterceptor implements HandlerInterceptor {
+	@Autowired
+	DeviceMapper mapper;
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object obj) throws IOException{
 		/*该方法将在请求处理之前进行调用，只有该方法返回true，才会继续执行后续的Interceptor和Controller，当返回值为true 时就会继续调用下一个Interceptor的preHandle 方法，如果已经是最后一个Interceptor的时候就会是调用当前请求的Controller方法；*/
 		//		log.info("拦截器开始");//校验签名，时间戳等等
 		String requestParam = null;
 		requestParam = HttpHelper.getBodyString(request);
+		String deviceinfo = request.getHeader("device_info");
+		if(!StringUtils.isEmpty(deviceinfo)){
+			String ishave= mapper.isSignDevice(deviceinfo);
+			if(StringUtils.isEmpty(ishave)){
+				ResultData result = new ResultData();
+				result.setCode(220);
+				result.setMsg("device_info invalid");
+				response.getWriter().write(GsonUtils.getInstance().o2J(result));
+				return false;
+			}
+		}
 		if(StringUtils.isEmpty(requestParam)){
 			ResultData result = new ResultData();
 			result.setCode(210);

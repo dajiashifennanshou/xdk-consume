@@ -48,7 +48,7 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
@@ -60,12 +60,8 @@
 			<artifactId>druid</artifactId>
 			<version>1.0.14</version>
 		</dependency>
-		<!-- MP 核心库 自动生成代码使用
-		<dependency>
-			<groupId>com.baomidou</groupId>
-			<artifactId>mybatis-plus</artifactId>
-			<version>2.1.9</version>
-		</dependency> -->
+		<!-- MP 核心库 自动生成代码使用 <dependency> <groupId>com.baomidou</groupId> <artifactId>mybatis-plus</artifactId> 
+			<version>2.1.9</version> </dependency> -->
 		<!-- sqlserviver -->
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
@@ -95,7 +91,11 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<failOnMissingWebXml>true</failOnMissingWebXml>
+				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 </project>

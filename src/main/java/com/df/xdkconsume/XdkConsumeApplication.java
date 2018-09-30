@@ -15,7 +15,7 @@ public class XdkConsumeApplication  extends SpringBootServletInitializer{
 	}
 
 	/**
-	 *新增此方法
+	 *新增此方法,打包war
 	 */
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {

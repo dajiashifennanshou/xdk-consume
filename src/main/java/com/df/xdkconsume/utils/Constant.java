@@ -24,4 +24,6 @@ public interface Constant {
     String MSG_PARAM_NULL = "参数错误";//参数错误，参数不能为空param cant be null or empty
     int CODE_LOST_CARD = 301;
     String MSG_LOST_CARD = "挂失失败";//挂失卡
+    int CODE_SIGN_WRONG = 302;
+    String MSG_SIGN_WRONG = "注册失败";//挂失卡
 }

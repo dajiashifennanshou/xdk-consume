@@ -63,22 +63,22 @@ public class PersonDossierController {
 
 	@Autowired
 	private SpendDetailService spendService;
-	
+
 	@Autowired
 	private ExpiredCardService expiredService;
-	
+
 	@Autowired
 	private DepartmentService departmentService;
-	
+
 	@Autowired
 	private CtCanteenService canteenService;
-	
+
 	@Autowired
 	private FoodMenuService foodMenuService;
-	
+
 	@Autowired()
 	WXPay wxPay;
-	
+
 	@Value("${pay-config.mch_id}")
 	String mchid;
 	/**
@@ -88,15 +88,13 @@ public class PersonDossierController {
 	 */
 	@Transactional(rollbackFor=Exception.class)
 	@RequestMapping(path = "/comsume",method = RequestMethod.POST)
-	public synchronized ResultData userConsume(@RequestBody ComsumeParam param) {
+	public synchronized ResultData userConsume(@RequestBody WxpayParam param) {
 		String clientid = param.getClientid();
-		String cardid = param.getCardid();
-		String computer = param.getComputer();
 		String spendDate = param.getSpendDate();
 		String spendTime = param.getSpendTime();
-		String windowNumber = param.getWindowNumber();
-		double spendMoney = param.getSpendMoney();
-		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(cardid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)||spendMoney == 0){
+		String cashlistString = param.getCashList();
+		String cardid = param.getCardid();
+		if(StringUtils.isEmpty(cardid)||cashlistString == null||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
@@ -108,6 +106,12 @@ public class PersonDossierController {
 			data.setMsg("cardid wrong");
 			return data;
 		}
+		cashlistString = cashlistString.replace("{", "").replace("}", "");
+		String[] cashidAndMoney = cashlistString.split("\\|");
+		String[] cashlist = new String[cashidAndMoney.length];
+		for (int i= 0;i<cashidAndMoney.length;i++) {
+			cashlist[i] =cashidAndMoney[i].split(",")[0]; 
+		}
 		cardid = cardid.substring(6,8)+cardid.substring(4,6)+cardid.substring(2,4)+cardid.substring(0,2);
 		EntityWrapper<PersonDossier> pWrapper = new EntityWrapper<>();
 		pWrapper.where("pd_cardid = {0}",cardid).and("clientid = {0}",clientid);
@@ -118,12 +122,57 @@ public class PersonDossierController {
 			data.setMsg(Constant.MSG_PERSON_NO_USER);
 			return data;
 		}
-		double beforeMoney = pDossier.getPdCashmoney();
 		if(pDossier.getPdLoss() == 1){
 			data.setCode(Constant.CODE_PERSON_LOST);
 			data.setMsg(Constant.MSG_PERSON_LOST);
 			return data;
 		}
+		double totalfee = 0;
+		double one = 0;
+		double two = 0;
+		HashSet<String> typeset = new HashSet<>();//商家类型
+		ArrayList<FoodMenu> menus = new ArrayList<>();
+		for (String id : cashlist) {
+			EntityWrapper<FoodMenu> wrapper =  new EntityWrapper<>();
+			wrapper.where("clientid = {0} and fm_plateid = {1}", clientid,id);
+			FoodMenu fMenu = foodMenuService.selectOne(wrapper);
+			typeset.add(fMenu.getFmCanteen());
+			menus.add(fMenu);
+			totalfee += fMenu.getFmUnitprice();
+		}
+		//找不到对应餐盘
+		if(menus.size() == 0){
+			data.setCode(Constant.CODE_PARAM_NULL);
+			data.setMsg("找不到餐盘");
+			return data;
+		}
+		String firstName = null;
+		String secondName = null;
+		CtCanteen canteen1 = null;
+		CtCanteen canteen2 = null;
+		Iterator<String> it = typeset.iterator();
+		while (it.hasNext()) {
+			if(firstName != null){
+				secondName = it.next();
+				EntityWrapper<CtCanteen> cWrapper =  new EntityWrapper<>();
+				cWrapper.where("clientid = {0} and can_id = {1}", clientid,secondName);
+				canteen2 = canteenService.selectOne(cWrapper);
+			}else{
+				firstName = it.next();
+				EntityWrapper<CtCanteen> cWrapper =  new EntityWrapper<>();
+				cWrapper.where("clientid = {0} and can_id = {1}", clientid,firstName);
+				canteen1 = canteenService.selectOne(cWrapper);
+			}
+		}
+		//计算两个食堂分别的价格，插入记录
+		for (FoodMenu foodMenu : menus) {
+			if(foodMenu.getFmCanteen().equals(firstName)){
+				one += foodMenu.getFmUnitprice();
+			}else{
+				two += foodMenu.getFmUnitprice();
+			}
+		}
+		double beforeMoney = pDossier.getPdCashmoney();
 		double extroMoney = pDossier.getPdSubsidymoney();
 		if(beforeMoney < 0 ||extroMoney < 0){
 			data.setCode(Constant.CODE_PERSON_MOENY_FU);
@@ -131,20 +180,60 @@ public class PersonDossierController {
 			return data;
 		}
 		double allmoney = extroMoney + beforeMoney;
-		if(allmoney < spendMoney){
+		if(allmoney < totalfee){
 			data.setCode(Constant.CODE_PERSON_NO_MOENY);
 			data.setMsg(Constant.MSG_PERSON_NO_MONEY);
 			return data;
 		}
+		if(one > 0){
+			ResultData result = countDowmMoeny(spendDate,spendTime,one,clientid,cardid,canteen1.getCanWindowno(),canteen1.getCanComputer());
+			if(result.getCode() != Constant.CODE_SUCCESS){
+				return result;
+			}
+		}
+		if(two > 0){
+			ResultData result = countDowmMoeny(spendDate,spendTime,two,clientid,cardid,canteen2.getCanWindowno(),canteen2.getCanComputer());
+			if(result.getCode() != Constant.CODE_SUCCESS){
+				return result;
+			}
+		}
+		EntityWrapper<PersonDossier> qurymy = new EntityWrapper<>();
+		qurymy.where("pd_cardid = {0}",cardid).and("clientid = {0}",clientid);
+		PersonDossier qurymyuser =  (PersonDossier) personService.selectOne(pWrapper);
+		UserMoney userMoney = new UserMoney();
+		userMoney.setCashmoney(qurymyuser.getPdCashmoney());
+		userMoney.setSubsidymoney(qurymyuser.getPdSubsidymoney());
+		data.setCode(Constant.CODE_SUCCESS);
+		data.setMsg(Constant.MSG_SUCCESS);
+		data.setData(userMoney);
+		return data;
+	}
+
+	/**
+	 * 插入记录操作余额
+	 * @param spendDate
+	 * @param spendTime
+	 * @param spendMoney
+	 * @param clientid
+	 * @param cardid
+	 * @param windowNumber
+	 * @param computer
+	 * @return
+	 */
+	private ResultData countDowmMoeny(String spendDate,String spendTime,Double spendMoney,String clientid, String cardid, String windowNumber, String computer) {
+		EntityWrapper<PersonDossier> pWrapper = new EntityWrapper<>();
+		pWrapper.where("pd_cardid = {0}",cardid).and("clientid = {0}",clientid);
+		PersonDossier pDossier =  (PersonDossier) personService.selectOne(pWrapper);
+		ResultData data = new ResultData();
+		double beforeMoney = pDossier.getPdCashmoney();
+		double extroMoney = pDossier.getPdSubsidymoney();
 		//没有补助的直接消费一卡通
 		if(extroMoney == 0){
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(beforeMoney - spendMoney);
 			pDossier.setPdCashmoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney))){
-				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
-				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
-				return data;
+			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
+				throw new RuntimeException("余额更新失败");
 			}
 			SpendDetail detail = new SpendDetail();
 			SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -198,10 +287,8 @@ public class PersonDossierController {
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(extroMoney - spendMoney);
 			pDossier.setPdSubsidymoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney))){
-				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
-				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
-				return data;
+			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
+				throw new RuntimeException("余额更新失败");
 			}
 			SpendDetail detail = new SpendDetail();
 			SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -228,8 +315,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(spendMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(Double.valueOf(afterMoney));
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -257,10 +344,8 @@ public class PersonDossierController {
 			Double after_moeny = Double.valueOf(df.format(beforeMoney - Double.valueOf(should_pay)));
 			pDossier.setPdSubsidymoney(0.0);
 			pDossier.setPdCashmoney(after_moeny);
-			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney))){
-				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
-				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
-				return data;
+			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
+				throw new RuntimeException("余额更新失败");
 			}
 			String meal = "早";
 			if(spendTime.length() >= 2){
@@ -287,8 +372,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(extroMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(0.0);
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -350,7 +435,7 @@ public class PersonDossierController {
 		String spendTime = param.getSpendTime();
 		String windowNumber = param.getWindowNumber();
 		double spendMoney = param.getSpendMoney();
-		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(cardid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)||spendMoney == 0){
+		if(StringUtils.isEmpty(clientid)||StringUtils.isEmpty(cardid)||StringUtils.isEmpty(computer)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)||StringUtils.isEmpty(windowNumber)||spendMoney == 0){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
@@ -388,7 +473,7 @@ public class PersonDossierController {
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(beforeMoney - spendMoney);
 			pDossier.setPdCashmoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney))){
+			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -445,7 +530,7 @@ public class PersonDossierController {
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(extroMoney - spendMoney);
 			pDossier.setPdSubsidymoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney))){
+			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -475,8 +560,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(spendMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(Double.valueOf(afterMoney));
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -504,7 +589,7 @@ public class PersonDossierController {
 			Double after_moeny = Double.valueOf(df.format(beforeMoney - Double.valueOf(should_pay)));
 			pDossier.setPdSubsidymoney(0.0);
 			pDossier.setPdCashmoney(after_moeny);
-			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney))){
+			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -534,8 +619,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(extroMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(0.0);
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -619,7 +704,7 @@ public class PersonDossierController {
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(beforeMoney - spendMoney);
 			pDossier.setPdCashmoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney))){
+			if(!personService.updateForSet("pd_cashmoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -676,7 +761,7 @@ public class PersonDossierController {
 			DecimalFormat df = new DecimalFormat("#.00");
 			String afterMoney  = df.format(extroMoney - spendMoney);
 			pDossier.setPdSubsidymoney(Double.valueOf(afterMoney));
-			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney))){
+			if(!personService.updateForSet("pd_subsidymoney = "+afterMoney,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -706,8 +791,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(spendMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(Double.valueOf(afterMoney));
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -735,7 +820,7 @@ public class PersonDossierController {
 			Double after_moeny = Double.valueOf(df.format(beforeMoney - Double.valueOf(should_pay)));
 			pDossier.setPdSubsidymoney(0.0);
 			pDossier.setPdCashmoney(after_moeny);
-			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney))){
+			if(!personService.updateForSet("pd_subsidymoney = "+0+" ,pd_cashmoney = "+after_moeny,new EntityWrapper<PersonDossier>().where("pd_subsidymoney = {0}",extroMoney).and("pd_cashmoney = {0}",beforeMoney).and("pd_cardid = {0}",cardid).and("clientid = {0}",clientid))){
 				data.setCode(Constant.CODE_PERSON_UPDATE_WRONG);
 				data.setMsg(Constant.MSG_PERSON_UPDATE_WRONG);
 				return data;
@@ -765,8 +850,8 @@ public class PersonDossierController {
 			detail.setSdMeal(meal);
 			detail.setSdMoney(extroMoney);
 			detail.setSdMoneyaccount("补助");
-			detail.setSdNewmoney(beforeMoney);
-			detail.setSdOldmoney(beforeMoney);
+			detail.setSdNewmoney(0.0);
+			detail.setSdOldmoney(extroMoney);
 			detail.setSdOperator("");
 			detail.setSdPdaccountid(pDossier.getPdAccountid());
 			detail.setSdPdid(pDossier.getPdId());
@@ -848,7 +933,7 @@ public class PersonDossierController {
 		}
 		return data;
 	}
-	
+
 	/**
 	 * 根据账号拿到用户信息
 	 * @param param
@@ -1013,7 +1098,7 @@ public class PersonDossierController {
 		}
 		return request.getRemoteAddr();  
 	}  
-	
+
 	/**
 	 * 餐台微信扣款消费
 	 * @param param
@@ -1027,13 +1112,18 @@ public class PersonDossierController {
 		String spendDate = param.getSpendDate();
 		String spendTime = param.getSpendTime();
 		String cashlistString = param.getCashList();
-		String[] cashlist = cashlistString.split(",");
 		String ip = getIp2(request);
-		if(StringUtils.isEmpty(param.getAuthCode())||cashlist == null||cashlist.length == 0||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)){
+		if(StringUtils.isEmpty(param.getAuthCode())||StringUtils.isEmpty(clientid)||StringUtils.isEmpty(spendDate)||StringUtils.isEmpty(spendTime)){
 			ResultData data = new ResultData();
 			data.setCode(Constant.CODE_PARAM_NULL);
 			data.setMsg(Constant.MSG_PARAM_NULL);
 			return data;
+		}
+		cashlistString = cashlistString.replace("{", "").replace("}", "");
+		String[] cashidAndMoney = cashlistString.split("\\|");
+		String[] cashlist = new String[cashidAndMoney.length];
+		for (int i= 0;i<cashidAndMoney.length;i++) {
+			cashlist[i] =cashidAndMoney[i].split(",")[0]; 
 		}
 		double totalfee = 0;
 		double one = 0;
@@ -1047,6 +1137,13 @@ public class PersonDossierController {
 			typeset.add(fMenu.getFmCanteen());
 			menus.add(fMenu);
 			totalfee += fMenu.getFmUnitprice();
+		}
+		//找不到对应餐盘
+		if(menus.size() == 0){
+			ResultData data = new ResultData();
+			data.setCode(Constant.CODE_PARAM_NULL);
+			data.setMsg("找不到餐盘");
+			return data;
 		}
 		String firstName = null;
 		String secondName = null;
@@ -1113,7 +1210,7 @@ public class PersonDossierController {
 			}
 		}
 		//生成记录
-		if(one != 0){
+		if(one > 0){
 			//第一商家
 			SpendDetail detail = new SpendDetail();
 			detail.setClientid(clientid);
@@ -1154,7 +1251,7 @@ public class PersonDossierController {
 				throw new RuntimeException(Constant.MSG_COMSUME_INSERT_WRONG);
 			}
 		}
-		if (two != 0) {
+		if (two > 0) {
 			//第二商家
 			SpendDetail detail = new SpendDetail();
 			detail.setClientid(clientid);

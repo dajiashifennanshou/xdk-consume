@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.df.xdkconsume.config.WXPayConfig;
 import com.df.xdkconsume.pay.WXPayConstants.SignType;
+import com.df.xdkconsume.utils.GsonUtils;
 
 
 
@@ -62,7 +63,7 @@ public class WXPay {
      * @throws Exception
      */
     public Map<String, String> fillRequestData(Map<String, String> reqData) throws Exception {
-        reqData.put("appid", config.getAppID());
+        reqData.put("sub_appid", config.getAppID());
         reqData.put("mch_id", config.getMchID());
         reqData.put("nonce_str", WXPayUtil.generateNonceStr());
         if (SignType.MD5.equals(this.signType)) {
@@ -72,6 +73,7 @@ public class WXPay {
             reqData.put("sign_type", WXPayConstants.HMACSHA256);
         }
         reqData.put("sign", WXPayUtil.generateSignature(reqData, config.getKey(), this.signType));
+        System.out.println(GsonUtils.getInstance().o2J(reqData));
         return reqData;
     }
 
@@ -167,7 +169,7 @@ public class WXPay {
         if (this.isResponseSignatureValid(respData)) {
             return respData;
         }else {
-			return null;
+			return respData;
 		}
     }
 
