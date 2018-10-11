@@ -1,16 +1,24 @@
 //package com.df.xdkconsume;
+//import static org.hamcrest.CoreMatchers.nullValue;
 //
 //import java.text.SimpleDateFormat;
 //import java.util.Date;
+//import java.util.HashMap;
 //import java.util.TreeMap;
 //
 //import org.junit.Test;
+//import org.junit.runner.RunWith;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.boot.test.context.SpringBootTest;
+//import org.springframework.test.context.junit4.SpringRunner;
 //
 //import com.df.xdkconsume.entity.WxpayParam;
+//import com.df.xdkconsume.mapper.DeviceMapper;
+//import com.df.xdkconsume.pay.WXPay;
+//import com.df.xdkconsume.pay.WXPayUtil;
 //import com.df.xdkconsume.utils.BeanUtil;
 //import com.df.xdkconsume.utils.GsonUtils;
 //import com.df.xdkconsume.utils.VerifyUtil;
-
 //@RunWith(SpringRunner.class)
 //@SpringBootTest
 //public class XdkConsumeApplicationTests {
@@ -18,13 +26,6 @@
 //	DeviceMapper mapper;
 //	@Autowired()
 //	WXPay wxPay;
-	
-//	@Test
-//	public void testSign(){
-//		System.out.println(mapper.signDevice("222011111111111111111111", "20180101444444")+"============2");
-//		System.out.println(mapper.isSignDevice("sada")+"=======11");
-//		
-//	}
 
 //	@Test
 //	public void testPay() throws Exception{
@@ -56,5 +57,17 @@
 //		String keyStrin = VerifyUtil.createSign(qweMap, "cinzn2055");
 //		param.setSign(keyStrin);
 //		System.out.println(GsonUtils.getInstance().o2J(param));
+//	}
+//	@Test
+//	public void testshuzhu() throws Exception{
+//		String[] arrs = new String[1];
+//		arrs[0] = "0.0";
+//		for (String string : arrs) {
+//			if(Double.valueOf(string) == 0){
+//				System.out.println("asdasd");
+//				continue;
+//			}
+//			System.out.println(string);
+//		}
 //	}
 //}
