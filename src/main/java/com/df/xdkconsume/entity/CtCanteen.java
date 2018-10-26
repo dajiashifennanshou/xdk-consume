@@ -1,6 +1,7 @@
 package com.df.xdkconsume.entity;
 
 import com.baomidou.mybatisplus.annotations.TableName;
+
 import java.io.Serializable;
 
 /**
@@ -15,7 +16,6 @@ import java.io.Serializable;
 public class CtCanteen implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
     private String clientid;
     private String canId;
     private String canName;

@@ -2,9 +2,9 @@ server:
   port: 9000
 spring:
   datasource:
-    username: mch_cyy
-    password: Cinzn_Ykt*2018/1001
-    url: jdbc:sqlserver://localhost:10433;DatabaseName=czn_yunykt
+    username: czn_wxykt
+    password: WeiXin*1300/1040
+    url: jdbc:sqlserver://121.46.26.158:1980;DatabaseName=czn_csykt
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   mvc:

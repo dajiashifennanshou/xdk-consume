@@ -1,16 +1,5 @@
 package com.df.xdkconsume.config;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
-
 import com.alibaba.druid.util.StringUtils;
 import com.df.xdkconsume.entity.ResultData;
 import com.df.xdkconsume.mapper.DeviceMapper;
@@ -18,6 +7,15 @@ import com.df.xdkconsume.utils.GsonUtils;
 import com.df.xdkconsume.utils.HttpHelper;
 import com.df.xdkconsume.utils.VerifyUtil;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
 @Component
 public class MyHandlerInterceptor implements HandlerInterceptor {
 	@Autowired

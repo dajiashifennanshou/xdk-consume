@@ -1,8 +1,9 @@
 package com.df.xdkconsume.controller;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
+import com.df.xdkconsume.entity.DeviceParam;
+import com.df.xdkconsume.entity.ResultData;
+import com.df.xdkconsume.mapper.DeviceMapper;
+import com.df.xdkconsume.utils.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,25 +11,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.df.xdkconsume.entity.DeviceParam;
-import com.df.xdkconsume.entity.ResultData;
-import com.df.xdkconsume.mapper.DeviceMapper;
-import com.df.xdkconsume.utils.Constant;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
 * @author df
 * @version 创建时间：2018年9月14日 上午10:09:48
-* @Description 类描述
+* @Description 手持机注册APP接口
 */
 @RestController
 @RequestMapping("/device")
 public class DeviceSignController {
 	@Autowired
-	DeviceMapper deMapper;
+	private DeviceMapper deMapper;
 	
 	/**
 	 * 注册设备信息
-	 * @return
 	 */
 	@RequestMapping(path = "/sign",method = RequestMethod.POST)
 	public ResultData signDevice(@RequestBody DeviceParam param){
