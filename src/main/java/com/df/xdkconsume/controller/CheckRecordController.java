@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -93,12 +96,12 @@ public class CheckRecordController {
             data.setMsg("账号必须为十位");
             return data;
         }
-        byte[] img = getImageByte("d:\\headimg\\"+clientid+accountid+".jpg");
-        if(img == null||img.length == 0){
+        String img = getImageStr("d:\\headimg\\"+clientid+accountid+".jpg");
+        if(img == null||StringUtils.isEmpty(img)){
            boolean re =  FtpUtil.downloadFtpFile("121.46.26.158","czn_yktfile","YktFile*2018/0801",21,"\\Image\\Person\\","d:\\headimg\\",clientid+accountid+".jpg");
            if(re){
-               img = getImageByte("d:\\headimg\\"+clientid+accountid+".jpg");
-               if(img == null||img.length == 0){
+               img = getImageStr("d:\\headimg\\"+clientid+accountid+".jpg");
+               if(img == null||StringUtils.isEmpty(img)){
                    data.setCode(302);
                    data.setMsg("无此用户头像");
                    data.setData(img);
@@ -119,27 +122,59 @@ public class CheckRecordController {
         }
         return  data;
     }
-    /**
-     * 将图片文件转为byte数字
-     * @param imgFile
-     * @return
-     */
-    public static byte[] getImageByte(String imgFile) {
-        // 将图片文件转化为字节数组字符串，并对其进行Base64编码处理
-        //String imgFile = "d:\\111.jpg";// 待处理的图片
-        InputStream in = null;
-        byte[] data = null;
-        // 读取图片字节数组
-        try {
-            in = new FileInputStream(imgFile);
-            data = new byte[in.available()];
-            in.read(data);
-            in.close();
-        } catch (IOException e) {
-
-        }
-        // 返回Base64编码过的字节数组字符串
-        return data;
-    }
+   /**
+    * 图片转字符串
+    * @param imgStr
+    * @param filename
+    * @return
+    */
+   public boolean generateImage(String imgStr, String filename) {
+       if (imgStr == null) {
+           return false;
+       }
+       Base64.Decoder decoder = Base64.getDecoder();
+       try {
+           // 解密
+           byte[] b = decoder.decode(imgStr);
+           // 处理数据
+           for(int i = 0; i < b.length; ++i) {
+               if (b[i] < 0) {
+                   b[i] += 256;
+               }
+           }
+           OutputStream out = new FileOutputStream("D:/Systems/"+filename);
+           out.write(b);
+           out.flush();
+           out.close();
+           return true;
+       } catch (IOException e) {
+           // TODO Auto-generated catch block
+           e.printStackTrace();
+       }
+       return false;
+       
+   }
+   
+   /**
+    * 图片转字符串
+    * @param filePath    --->文件路径
+    * @return
+    */
+   public String getImageStr(String filePath) {
+       InputStream inputStream = null;
+       byte[] data = null;
+       try {
+           inputStream = new FileInputStream(filePath);
+           data = new byte[inputStream.available()];
+           inputStream.read(data);
+           inputStream.close();
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+       // 加密
+       Base64.Encoder encoder = Base64.getEncoder();
+       return encoder.encodeToString(data);
+   }
+   
 }
 

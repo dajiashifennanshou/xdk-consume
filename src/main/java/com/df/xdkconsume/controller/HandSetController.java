@@ -8,8 +8,10 @@ import com.df.xdkconsume.service.DepartmentService;
 import com.df.xdkconsume.service.ExpiredCardService;
 import com.df.xdkconsume.service.PersonDossierService;
 import com.df.xdkconsume.service.SpendDetailService;
+import com.df.xdkconsume.service.impl.ClientDossierServiceImpl;
 import com.df.xdkconsume.utils.Constant;
 import com.df.xdkconsume.utils.VerifyUtil;
+import com.df.xdkconsume.utils.WxSendmsg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,9 @@ public class HandSetController {
 
 	@Autowired
 	private DepartmentService departmentService;
+
+    @Autowired
+    private ClientDossierServiceImpl cdService;
 
 	@Autowired()
 	WXPay wxPay;
@@ -752,7 +757,18 @@ public class HandSetController {
 //		UserMoney userMoney = new UserMoney();
 //		userMoney.setCashmoney(qurymyuser.getPdCashmoney());
 //		userMoney.setSubsidymoney(qurymyuser.getPdSubsidymoney());
-		//发送模板消息
+        new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					//发送模板消息
+					ClientDossier clientDossier = cdService.selectOne(new EntityWrapper<ClientDossier>().where("clientid = #{0}",qurymyuser.getClientid()));
+					WxSendmsg.sendWxMsg(qurymyuser,clientDossier,param);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
 		data.setCode(Constant.CODE_SUCCESS);
 		data.setMsg(Constant.MSG_SUCCESS);
 		data.setData(qurymyuser);

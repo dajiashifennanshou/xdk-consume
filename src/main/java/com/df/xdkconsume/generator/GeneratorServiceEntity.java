@@ -15,15 +15,15 @@
 // * @Description 生成代码
 // */
 //public class GeneratorServiceEntity {
-//	String dbUrl = "jdbc:sqlserver://121.46.26.158:1980;DatabaseName=czn_xycykt";//数据库地址
-//	String userName = "czn_wxykt";//用户名
-//	String password = "WeiXin*1300/1040";//密码
+//	String dbUrl = "jdbc:sqlserver://220.166.57.83:10433;DatabaseName=czn_yunykt";//数据库地址
+//	String userName = "mch_cyy";//用户名
+//	String password = "Cinzn_Ykt*2018/1001";//密码
 //	String author = "df";//作者
 //	String place = "d:\\mybats-plus-generate";//生成路径
 //	String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";//驱动
 //	DbType type = DbType.SQL_SERVER;//数据库类型
 //	String packageName = "com.df.xdkconsume";//包名
-//	String[] tables = {"Routine_Time","Leave_Record"};//修改替换成你需要的表名，多个表名传数组
+//	String[] tables = {"CanTai"};//修改替换成你需要的表名，多个表名传数组
 //	boolean serviceNameStartWithI = false;//user -> UserService, 设置成true: user -> IUserService
 //
 //	@Test

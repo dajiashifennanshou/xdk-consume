@@ -1,16 +1,19 @@
 package com.df.xdkconsume.controller;
 
 
-import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.df.xdkconsume.entity.*;
-import com.df.xdkconsume.pay.WXPay;
-import com.df.xdkconsume.pay.WXPayUtil;
-import com.df.xdkconsume.service.impl.CtCanteenServiceImpl;
-import com.df.xdkconsume.service.impl.FoodMenuServiceImpl;
-import com.df.xdkconsume.service.impl.PersonDossierServiceImpl;
-import com.df.xdkconsume.service.impl.SpendDetailServiceImpl;
-import com.df.xdkconsume.utils.Constant;
-import com.df.xdkconsume.utils.VerifyUtil;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +23,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.df.xdkconsume.entity.BaseParam;
+import com.df.xdkconsume.entity.CanTai;
+import com.df.xdkconsume.entity.CtCanteen;
+import com.df.xdkconsume.entity.FoodMenu;
+import com.df.xdkconsume.entity.PersonDossier;
+import com.df.xdkconsume.entity.ResultData;
+import com.df.xdkconsume.entity.SpendDetail;
+import com.df.xdkconsume.entity.UserMoney;
+import com.df.xdkconsume.entity.WxpayParam;
+import com.df.xdkconsume.pay.WXPay;
+import com.df.xdkconsume.pay.WXPayUtil;
+import com.df.xdkconsume.service.impl.CanTaiServiceImpl;
+import com.df.xdkconsume.service.impl.CtCanteenServiceImpl;
+import com.df.xdkconsume.service.impl.FoodMenuServiceImpl;
+import com.df.xdkconsume.service.impl.PersonDossierServiceImpl;
+import com.df.xdkconsume.service.impl.SpendDetailServiceImpl;
+import com.df.xdkconsume.utils.Constant;
+import com.df.xdkconsume.utils.VerifyUtil;
 
 /**
  *
@@ -49,6 +66,9 @@ public class ElectronicTableController {
 
 	@Autowired()
 	WXPay wxPay;
+	
+	@Autowired
+	CanTaiServiceImpl canTaiService;
 
 	@Value("${pay-config.mch_id}")
 	String mchid;
@@ -472,7 +492,7 @@ public class ElectronicTableController {
 	 * @return
 	 * @throws Exception 
 	 */
-	@Transactional
+	@Transactional(rollbackFor=Exception.class)
 	@RequestMapping(value = "/comsume/wx",method = RequestMethod.POST)
 	public ResultData inertWxComsumeRecord(@RequestBody WxpayParam param,HttpServletRequest request) throws Exception{
 		String clientid = param.getClientid();
@@ -553,8 +573,23 @@ public class ElectronicTableController {
 				two += foodMenu.getFmUnitprice();
 			}
 		}
+		CanTai canTai =  new CanTai();
+		canTai.setAuthCode(param.getAuthCode());
+		canTai.setCashliststring(cashlistString);
+		canTai.setClientid(clientid);
+		canTai.setMchCreateIp("预支付");
+		canTai.setOne(one+"");
+		canTai.setTwo(two+"");
+		canTai.setOnename(firstName);
+		canTai.setTwoname(secondName);
+		canTai.setSpenddate(spendDate);
+		canTai.setSpendtime(spendTime);
+		String ordernumber  = WXPayUtil.createOrderNumber();
+		canTai.setOutTradeNo(ordernumber);
+		canTai.setTotalFee(totalfee+"");
+		canTaiService.insert(canTai);
 		HashMap<String, String> map = new HashMap<>();
-		map.put("out_trade_no", WXPayUtil.createOrderNumber());
+		map.put("out_trade_no", ordernumber);
 		map.put("body", "电子餐台消费");
 		map.put("service", "unified.trade.micropay");
 		String money = (int)(totalfee*100)+"";
@@ -564,10 +599,12 @@ public class ElectronicTableController {
 		//提交支付，判断支付结果
 		Map<String, String> result = wxPay.microPay(map);
 		if(result == null||result.get("status") == null||result.get("result_code") == null||!result.get("status").equals("0")||!result.get("result_code").equals("0")){
+			canTaiService.updateForSet("mch_create_ip = '支付失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
 			throw new RuntimeException(result.get("err_msg"));
 		}else {
 			if(result.get("status").equals("0")&&result.get("result_code").equals("0")){
 			}else if(result.get("need_query") != null&&result.get("need_query").equals("N")){
+				canTaiService.updateForSet("mch_create_ip = '支付失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
 				throw new RuntimeException(result.get("err_msg"));
 			}else if(result.get("need_query") == null||result.get("need_query").equals("Y")){
 				boolean is_success = false;
@@ -588,11 +625,13 @@ public class ElectronicTableController {
 					HashMap<String, String> map1 = new HashMap<>();
 					map1.put("out_trade_no", result.get("out_trade_no"));
 					map1.put("service", "unified.micropay.reverse");
+					canTaiService.updateForSet("mch_create_ip = '撤销订单'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
 					wxPay.reverse(map1);
 					throw new RuntimeException(result.get("err_msg"));
 				}
 			}
 		}
+		canTaiService.updateForSet("mch_create_ip = '微信支付成功'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
 		//生成记录
 		if(one > 0){
 			//第一商家
@@ -1055,10 +1094,12 @@ public class ElectronicTableController {
 		Map<String, String> order_result = wxPay.orderQuery(map2);
 		if(order_result.get("status") == null||order_result.get("result_code") == null||!order_result.get("status").equals("0")||!order_result.get("result_code").equals("0")){
 			System.out.println("查询失败");
+			canTaiService.updateForSet("mch_create_ip = '退款查询订单失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", result.get("out_trade_no")));
 			return;
 		}else{
 			if(order_result.get("trade_state") == null||!order_result.get("trade_state").equals("SUCCESS")){
 				System.out.println("查询失败");
+				canTaiService.updateForSet("mch_create_ip = '退款查询订单失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", result.get("out_trade_no")));
 				return;
 			}
 		}
@@ -1072,10 +1113,12 @@ public class ElectronicTableController {
 		map1.put("op_user_id",mchid);
 		Map<String, String> refund_result = wxPay.refund(map1);
 		if(refund_result.get("status") == null||refund_result.get("result_code") == null||!refund_result.get("status").equals("0")||!refund_result.get("result_code").equals("0")){
+			canTaiService.updateForSet("mch_create_ip = '退款失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", result.get("out_trade_no")));
 			System.out.println("退款失败");
 		}else{
 			if(refund_result.get("status") == null||!refund_result.get("status").equals("SUCCESS")){
 				System.out.println("退款失败");
+				canTaiService.updateForSet("mch_create_ip = '退款失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", result.get("out_trade_no")));
 			}
 		}
 	}

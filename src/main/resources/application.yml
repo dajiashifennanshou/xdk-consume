@@ -2,9 +2,9 @@ server:
   port: 9000
 spring:
   datasource:
-    username: czn_wxykt
-    password: WeiXin*1300/1040
-    url: jdbc:sqlserver://121.46.26.158:1980;DatabaseName=czn_csykt
+    username: 
+    password: 
+    url: 
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   mvc:
@@ -20,3 +20,5 @@ pay-config:
    appid: wxdc3c975af0311aef
    mch_id: 403520120170
    key: a351ddc5b84043f1382f33b381ed83a8
+logging:
+  file: D:\spingbootlog\spring_error.log
