@@ -1,11 +1,16 @@
 package com.df.xdkconsume.controller;
 
 
-import com.df.xdkconsume.entity.*;
-import com.df.xdkconsume.service.impl.CheckRecordServiceImpl;
-import com.df.xdkconsume.service.impl.PersonDossierServiceImpl;
-import com.df.xdkconsume.utils.Constant;
-import com.df.xdkconsume.utils.FtpUtil;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Base64;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.apache.http.util.TextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -16,14 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Base64;
-import java.util.List;
+import com.df.xdkconsume.entity.AccountidParam;
+import com.df.xdkconsume.entity.CheckRecodParam;
+import com.df.xdkconsume.entity.CheckRecord;
+import com.df.xdkconsume.entity.PersonDossier;
+import com.df.xdkconsume.entity.ResultData;
+import com.df.xdkconsume.service.impl.CheckRecordServiceImpl;
+import com.df.xdkconsume.service.impl.PersonDossierServiceImpl;
+import com.df.xdkconsume.utils.Constant;
+import com.df.xdkconsume.utils.FtpUtil;
 
 /**
  * <p>
@@ -173,6 +179,9 @@ public class CheckRecordController {
        }
        // 加密
        Base64.Encoder encoder = Base64.getEncoder();
+       if(data == null){
+    	   return null;
+       }
        return encoder.encodeToString(data);
    }
    

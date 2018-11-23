@@ -39,13 +39,22 @@ public class SpendDetail implements Serializable {
     private String sdOperator;
     private String sdWindowno;
     private String sdComputer;
+    private String sdFoid;
 
 
     public String getClientid() {
         return clientid;
     }
 
-    public void setClientid(String clientid) {
+    public String getSdFoid() {
+		return sdFoid;
+	}
+
+	public void setSdFoid(String sdFoid) {
+		this.sdFoid = sdFoid;
+	}
+
+	public void setClientid(String clientid) {
         this.clientid = clientid;
     }
 

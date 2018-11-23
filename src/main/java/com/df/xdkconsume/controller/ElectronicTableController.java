@@ -66,7 +66,7 @@ public class ElectronicTableController {
 
 	@Autowired()
 	WXPay wxPay;
-	
+
 	@Autowired
 	CanTaiServiceImpl canTaiService;
 
@@ -458,7 +458,7 @@ public class ElectronicTableController {
 			}else{
 				pDossier.setPdStatus("未知人员身份");
 			}
-//			statusmap.get("ps_student");
+			//			statusmap.get("ps_student");
 			data.setCode(Constant.CODE_SUCCESS);
 			data.setMsg(Constant.MSG_SUCCESS);
 			data.setData(pDossier);
@@ -466,7 +466,7 @@ public class ElectronicTableController {
 		return data;
 	}
 
-	
+
 	//得到ip地址
 	public  String getIp2(HttpServletRequest request) {  
 		String ip = request.getHeader("X-Forwarded-For");
@@ -494,7 +494,7 @@ public class ElectronicTableController {
 	 */
 	@Transactional(rollbackFor=Exception.class)
 	@RequestMapping(value = "/comsume/wx",method = RequestMethod.POST)
-	public ResultData inertWxComsumeRecord(@RequestBody WxpayParam param,HttpServletRequest request) throws Exception{
+	public synchronized ResultData inertWxComsumeRecord(@RequestBody WxpayParam param,HttpServletRequest request) throws Exception{
 		String clientid = param.getClientid();
 		String spendDate = param.getSpendDate();
 		String spendTime = param.getSpendTime();
@@ -549,8 +549,8 @@ public class ElectronicTableController {
 		}
 		String firstName = null;
 		String secondName = null;
-		CtCanteen canteen1 = null;
-		CtCanteen canteen2 = null;
+		CtCanteen canteen1 = new CtCanteen();
+		CtCanteen canteen2 = new CtCanteen();
 		Iterator<String> it = typeset.iterator();
 		while (it.hasNext()) {
 			if(firstName != null){
@@ -587,7 +587,7 @@ public class ElectronicTableController {
 		String ordernumber  = WXPayUtil.createOrderNumber();
 		canTai.setOutTradeNo(ordernumber);
 		canTai.setTotalFee(totalfee+"");
-		canTaiService.insert(canTai);
+		canTaiService.insertCantai(canTai);
 		HashMap<String, String> map = new HashMap<>();
 		map.put("out_trade_no", ordernumber);
 		map.put("body", "电子餐台消费");
@@ -598,40 +598,34 @@ public class ElectronicTableController {
 		map.put("mch_create_ip", ip);
 		//提交支付，判断支付结果
 		Map<String, String> result = wxPay.microPay(map);
-		if(result == null||result.get("status") == null||result.get("result_code") == null||!result.get("status").equals("0")||!result.get("result_code").equals("0")){
-			canTaiService.updateForSet("mch_create_ip = '支付失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
-			throw new RuntimeException(result.get("err_msg"));
-		}else {
-			if(result.get("status").equals("0")&&result.get("result_code").equals("0")){
-			}else if(result.get("need_query") != null&&result.get("need_query").equals("N")){
-				canTaiService.updateForSet("mch_create_ip = '支付失败'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
+		if(result == null||result.get("status") == null||result.get("result_code") == null||!result.get("status").equals("0")||!result.get("result_code").equals("0")||result.get("pay_result") == null||!result.get("pay_result").equals("0")){
+			if(result.get("need_query") != null&&result.get("need_query").equals("N")){
+				canTaiService.updateCantaiStatus("支付失败", ordernumber);
 				throw new RuntimeException(result.get("err_msg"));
 			}else if(result.get("need_query") == null||result.get("need_query").equals("Y")){
+				canTaiService.updateCantaiStatus("查询订单状态", ordernumber);
+				Thread.sleep(1000);
 				boolean is_success = false;
-				for(int i = 0;i < 4;i++){
-					HashMap<String, String> map1 = new HashMap<>();
-					map1.put("out_trade_no", result.get("out_trade_no"));
-					map1.put("service", "unified.trade.query");
-					Map<String, String> order_result = wxPay.orderQuery(map1);
-					if(order_result.get("status") != null&&order_result.get("result_code") != null&&order_result.get("status").equals("0")&&order_result.get("result_code").equals("0")){
-						if(order_result.get("trade_state") != null&&order_result.get("trade_state").equals("SUCCESS")){
-							is_success = true;
-							break;
-						}
+				HashMap<String, String> map1 = new HashMap<>();
+				map1.put("out_trade_no", ordernumber);
+				map1.put("service", "unified.trade.query");
+				Map<String, String> order_result = wxPay.orderQuery(map1);
+				if(order_result.get("status") != null&&order_result.get("result_code") != null&&order_result.get("status").equals("0")&&order_result.get("result_code").equals("0")){
+					if(order_result.get("trade_state") != null&&order_result.get("trade_state").equals("SUCCESS")){
+						is_success = true;
 					}
-					Thread.sleep(2000);
 				}
 				if(!is_success){
-					HashMap<String, String> map1 = new HashMap<>();
-					map1.put("out_trade_no", result.get("out_trade_no"));
-					map1.put("service", "unified.micropay.reverse");
-					canTaiService.updateForSet("mch_create_ip = '撤销订单'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
-					wxPay.reverse(map1);
+					HashMap<String, String> map2 = new HashMap<>();
+					map2.put("out_trade_no", ordernumber);
+					map2.put("service", "unified.micropay.reverse");
+					canTaiService.updateCantaiStatus("撤销订单", ordernumber);
+					wxPay.reverse(map2);
 					throw new RuntimeException(result.get("err_msg"));
 				}
 			}
 		}
-		canTaiService.updateForSet("mch_create_ip = '微信支付成功'", new EntityWrapper<CanTai>().where("out_trade_no = {0}", ordernumber));
+		canTaiService.updateCantaiStatus("微信支付成功", ordernumber);
 		//生成记录
 		if(one > 0){
 			//第一商家
@@ -643,16 +637,20 @@ public class ElectronicTableController {
 			detail.setSdCltime(datetime[1]);
 			detail.setSdDepartment("");
 			String meal = "早";
-			if(spendTime.length() >= 2){
-				String time = spendTime.substring(0,2);
-				int time_spend = Integer.valueOf(time);
-				if(time_spend < 15 && time_spend > 10){
-					meal = "午";
-				}else if(time_spend < 20 && time_spend > 14){
-					meal = "晚";
-				}else if(time_spend < 24 && time_spend > 19){
-					meal = "夜";
-				}
+			try{
+				if(spendTime.length() >= 2){
+					String time = spendTime.substring(0,2);
+					int time_spend = Integer.valueOf(time);
+					if(time_spend < 15 && time_spend > 10){
+						meal = "午";
+					}else if(time_spend < 20 && time_spend > 14){
+						meal = "晚";
+					}else if(time_spend < 24 && time_spend > 19){
+						meal = "夜";
+					}
+				} }
+			catch (Exception e){
+				canTaiService.updateCantaiStatus("微信支付成功spendtime判断早中晚出异常", ordernumber);
 			}
 			detail.setSdMeal(meal);
 			detail.setSdMoney(one);
@@ -667,8 +665,15 @@ public class ElectronicTableController {
 			detail.setSdSpenddate(spendDate);
 			detail.setSdSpendtime(spendTime);
 			detail.setSdSpendtype("微信消费");
-			detail.setSdWindowno(canteen1.getCanWindowno());
-			detail.setSdComputer(canteen1.getCanComputer());
+			detail.setSdFoid(ordernumber);
+			if(canteen1 == null){
+				detail.setSdWindowno("");
+				detail.setSdComputer("");
+				canTaiService.updateCantaiStatus("微信支付成功canteen1为null", ordernumber);
+			}else{
+				detail.setSdWindowno(canteen1.getCanWindowno());
+				detail.setSdComputer(canteen1.getCanComputer());
+			}
 			if(!spendService.insertAllColumn(detail)){
 				refundMoney(result);
 				throw new RuntimeException(Constant.MSG_COMSUME_INSERT_WRONG);
@@ -684,17 +689,20 @@ public class ElectronicTableController {
 			detail.setSdCltime(datetime[1]);
 			detail.setSdDepartment("");
 			String meal = "早";
-			if(spendTime.length() >= 2){
-				String time = spendTime.substring(0,2);
-				int time_spend = Integer.valueOf(time);
-				if(time_spend < 15 && time_spend > 10){
-					meal = "午";
-				}else if(time_spend < 20 && time_spend > 14){
-					meal = "晚";
-				}else if(time_spend < 24 && time_spend > 19){
-					meal = "夜";
+			try{
+				if(spendTime.length() >= 2){
+					String time = spendTime.substring(0,2);
+					int time_spend = Integer.valueOf(time);
+					if(time_spend < 15 && time_spend > 10){
+						meal = "午";
+					}else if(time_spend < 20 && time_spend > 14){
+						meal = "晚";
+					}else if(time_spend < 24 && time_spend > 19){
+						meal = "夜";
+					}
+				}}catch (Exception e){
+					canTaiService.updateCantaiStatus("微信支付成功spendtime判断早中晚出异常", ordernumber);
 				}
-			}
 			detail.setSdMeal(meal);
 			detail.setSdMoney(two);
 			detail.setSdMoneyaccount("现金");
@@ -708,8 +716,15 @@ public class ElectronicTableController {
 			detail.setSdSpenddate(spendDate);
 			detail.setSdSpendtime(spendTime);
 			detail.setSdSpendtype("微信消费");
-			detail.setSdWindowno(canteen2.getCanWindowno());
-			detail.setSdComputer(canteen2.getCanComputer());
+			detail.setSdFoid(ordernumber);
+			if(canteen2 == null){
+				detail.setSdWindowno("");
+				detail.setSdComputer("");
+				canTaiService.updateCantaiStatus("微信支付成功canteen2为null", ordernumber);
+			}else{
+				detail.setSdWindowno(canteen2.getCanWindowno());
+				detail.setSdComputer(canteen2.getCanComputer());
+			}
 			if(!spendService.insertAllColumn(detail)){
 				refundMoney(result);
 				throw new RuntimeException(Constant.MSG_COMSUME_INSERT_WRONG);

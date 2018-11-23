@@ -1,25 +1,21 @@
 package com.df.xdkconsume.service.impl;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-
-import org.apache.http.util.TextUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
-import com.df.xdkconsume.entity.CheckRecodParam;
-import com.df.xdkconsume.entity.CheckRecord;
-import com.df.xdkconsume.entity.LeaveRecord;
-import com.df.xdkconsume.entity.PersonDossier;
-import com.df.xdkconsume.entity.RoutineTime;
+import com.df.xdkconsume.entity.*;
 import com.df.xdkconsume.mapper.CheckRecordMapper;
 import com.df.xdkconsume.mapper.LeaveRecordMapper;
 import com.df.xdkconsume.mapper.RoutineTimeMapper;
 import com.df.xdkconsume.service.CheckRecordService;
+import org.apache.http.util.TextUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * <p>
@@ -73,7 +69,7 @@ public class CheckRecordServiceImpl extends ServiceImpl<CheckRecordMapper, Check
 		switch (rqparam.getChecktype()) {
 		case "0":
 			routineTime = rtMapper.findRoutineTimes(user.getClientid(), user.getPdStatus(), rqparam.getDate(), rqparam.getTime().substring(0,4), daywhat);
-			if (routineTime == null) {
+			if (routineTime == null||StringUtils.isEmpty(routineTime.getRtName())) {
 				record = ensureCheckLV(record, routineTime, user, rqparam);
 			} else {
 				record.setCrEnabled("作息时段");
@@ -82,8 +78,8 @@ public class CheckRecordServiceImpl extends ServiceImpl<CheckRecordMapper, Check
 			}
 			break;
 		case "1":
-			routineTime = rtMapper.findRoutineTimea(user.getClientid(), user.getPdStatus(), rqparam.getDate(), rqparam.getTime(), daywhat);
-			if (routineTime == null) {
+			routineTime = rtMapper.findRoutineTimea(user.getClientid(), user.getPdStatus(), rqparam.getDate(), rqparam.getTime().substring(0,4), daywhat);
+			if (routineTime == null||StringUtils.isEmpty(routineTime.getRtName())) {
 				record = ensureCheckLV(record, routineTime, user, rqparam);
 			} else {
 				record.setCrEnabled("作息时段");
@@ -92,8 +88,8 @@ public class CheckRecordServiceImpl extends ServiceImpl<CheckRecordMapper, Check
 			}
 			break;
 		case "2":
-			routineTime = rtMapper.findRoutineTimec(user.getClientid(), user.getPdStatus(), rqparam.getDate(), rqparam.getTime(), daywhat);
-			if (routineTime == null) {
+			routineTime = rtMapper.findRoutineTimec(user.getClientid(), user.getPdStatus(), rqparam.getDate(), rqparam.getTime().substring(0,4), daywhat);
+			if (routineTime == null||StringUtils.isEmpty(routineTime.getRtName())) {
 				record = ensureCheckLV(record, routineTime, user, rqparam);
 			} else {
 				record.setCrEnabled("作息时段");
